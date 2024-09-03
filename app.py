@@ -23,23 +23,21 @@ def add_transaction(transaction_data):
         transaction_data[1] = transaction_data[1].strftime('%Y-%m-%d')
     if isinstance(transaction_data[10], datetime.date):
         transaction_data[10] = transaction_data[10].strftime('%Y-%m-%d')
-    
+
     # Append the transaction data to the Google Sheet
     transactions_sheet.append_row(transaction_data)
-    
+
     # Update stock based on the transaction type
     update_stock(transaction_data[2], transaction_data[3], transaction_data[4])
 
 # Function to update stock
 def update_stock(item_id, quantity, transaction_type):
-    # Try to find the item in the stock sheet
+    # Find the row for the item in the Stock sheet
     try:
         stock_row = stock_sheet.find(item_id).row
     except gspread.exceptions.CellNotFound:
-        # If item not found, add it to the stock sheet with initial stock 0
-        st.warning(f"Item ID {item_id} not found in stock. Adding it to the stock sheet with initial quantity 0.")
-        stock_sheet.append_row([item_id, "Unknown Item", 0])  # Add a placeholder entry for the item
-        stock_row = stock_sheet.find(item_id).row
+        st.error(f"Item ID {item_id} not found in stock. Please add the item first.")
+        return
 
     # Get the current stock quantity
     current_stock = int(stock_sheet.cell(stock_row, 3).value)
@@ -52,16 +50,16 @@ def update_stock(item_id, quantity, transaction_type):
     else:
         st.error("Invalid transaction type.")
         return
-    
+
     # Update the stock sheet
     stock_sheet.update_cell(stock_row, 3, new_stock)
     st.success(f"Stock for Item ID {item_id} updated. New stock: {new_stock}")
 
 # Function to add a new item to the Items Database
-def add_item(item_name, item_specification, machine_name, unit_cost_range):
+def add_item(item_name):
     item_id = str(len(items_sheet.col_values(1)) + 1)  # Generate a new Item ID
-    items_sheet.append_row([item_id, item_name, item_specification, machine_name])
-    stock_sheet.append_row([item_id, item_name, 0, unit_cost_range])  # Initialize stock as 0 with cost range
+    items_sheet.append_row([item_id, item_name])
+    stock_sheet.append_row([item_id, item_name, 0])  # Initialize stock as 0
     st.success(f"Item '{item_name}' added to the Items Database with ID {item_id}.")
 
 # Function to display the current inventory
@@ -103,11 +101,11 @@ def main():
         if st.button("Submit"):
             # Generate a Transaction ID
             transaction_id = str(len(transactions_sheet.col_values(1)) + 1)
-            
+
             # Find the Item ID from the Items Database
             item_id_cell = items_sheet.find(item_name)
             item_id = items_sheet.cell(item_id_cell.row, 1).value
-            
+
             # Prepare the transaction data
             transaction_data = [
                 transaction_id,
@@ -127,17 +125,14 @@ def main():
 
             # Add transaction to the sheet and update stock
             add_transaction(transaction_data)
-    
+
     elif selected_tab == "View Inventory":
         view_inventory()
 
     elif selected_tab == "Add Item":
         new_item_name = st.text_input("Enter new item name")
-        item_specification = st.text_input("Enter item specification")
-        machine_name = st.text_input("Machine Name (if specific)")
-        unit_cost_range = st.number_input("Enter unit cost range", min_value=0.0)
         if st.button("Add Item"):
-            add_item(new_item_name, item_specification, machine_name, unit_cost_range)
+            add_item(new_item_name)
 
 if __name__ == "__main__":
     main()
