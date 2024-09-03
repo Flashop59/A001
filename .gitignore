@@ -1,0 +1,17 @@
+# Ignore credentials file
+credentials.json
+
+# Ignore Python cache directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environment folders
+.venv/
+env/
+venv/
+
+# Ignore any system files (e.g., MacOS or Windows)
+.DS_Store
+Thumbs.db
