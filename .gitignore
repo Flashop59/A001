@@ -12,6 +12,6 @@ __pycache__/
 env/
 venv/
 
-# Ignore any system files (e.g., MacOS or Windows)
+# Ignore system files
 .DS_Store
 Thumbs.db
